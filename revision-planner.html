@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Revision Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --oat: #F2EDE4;
+    --warm-white: #FEF9F5;
+    --rose: #C97B8A;
+    --mauve: #D4A5B5;
+    --charcoal: #2C2426;
+    --muted: #8C7B7F;
+    --border: #DDD5CC;
+    --chem-bg: #FAE8E0;
+    --chem-text: #A0513A;
+    --bio-bg: #E4EDE0;
+    --bio-text: #4A7A3A;
+    --maths-bg: #EAE0F0;
+    --maths-text: #6A4A8A;
+    --amber-bg: #FEF3CD;
+    --amber-border: #E8C56A;
+    --amber-text: #7A5C00;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--oat);
+    color: var(--charcoal);
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    color: var(--charcoal);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  header p {
+    font-size: 0.875rem;
+    color: var(--muted);
+    margin-top: 6px;
+    font-weight: 300;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 28px;
+    background: var(--warm-white);
+    border: 1.5px solid var(--border);
+    border-radius: 50px;
+    padding: 4px;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .tab-btn {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 50px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    background: transparent;
+    color: var(--muted);
+    transition: all 0.2s ease;
+  }
+
+  .tab-btn.active {
+    background: var(--rose);
+    color: white;
+    box-shadow: 0 2px 8px rgba(201,123,138,0.3);
+  }
+
+  /* Week cards */
+  .week-card {
+    background: var(--warm-white);
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    transition: box-shadow 0.2s;
+  }
+
+  .week-card:hover { box-shadow: 0 4px 20px rgba(44,36,38,0.07); }
+
+  .week-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .week-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.2rem;
+    color: var(--charcoal);
+  }
+
+  .week-dates {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-weight: 400;
+    margin-top: 2px;
+    margin-bottom: 12px;
+  }
+
+  .deadline-banner {
+    background: var(--amber-bg);
+    border: 1.5px solid var(--amber-border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.8rem;
+    color: var(--amber-text);
+    font-weight: 500;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .deadline-banner::before { content: '⚠️'; font-size: 0.85rem; }
+
+  /* Progress bar */
+  .progress-wrap {
+    background: var(--border);
+    border-radius: 100px;
+    height: 7px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    border-radius: 100px;
+    background: linear-gradient(90deg, var(--rose), var(--mauve));
+    transition: width 0.4s ease;
+  }
+
+  .progress-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-bottom: 6px;
+    text-align: right;
+  }
+
+  /* Topics */
+  .topic-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+
+  .topic-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .topic-item:hover { background: var(--oat); }
+
+  .topic-item input[type="checkbox"] {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border);
+    border-radius: 5px;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+
+  .topic-item input[type="checkbox"]:checked {
+    background: var(--rose);
+    border-color: var(--rose);
+  }
+
+  .topic-item input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 5px;
+    width: 5px;
+    height: 9px;
+    border: 2px solid white;
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg);
+  }
+
+  .topic-label {
+    font-size: 0.875rem;
+    color: var(--charcoal);
+    flex: 1;
+    transition: all 0.2s;
+  }
+
+  .topic-item.done .topic-label {
+    text-decoration: line-through;
+    color: var(--muted);
+  }
+
+  /* Badges */
+  .badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 100px;
+    flex-shrink: 0;
+    letter-spacing: 0.02em;
+  }
+
+  .badge-chem { background: var(--chem-bg); color: var(--chem-text); }
+  .badge-bio { background: var(--bio-bg); color: var(--bio-text); }
+  .badge-maths { background: var(--maths-bg); color: var(--maths-text); }
+  .badge-recurring { background: #F5E8EA; color: var(--rose); }
+  .badge-flag { background: #FFF0E0; color: #B06020; }
+
+  /* Low priority card */
+  .low-priority-card {
+    background: var(--warm-white);
+    border: 1.5px dashed var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    opacity: 0.85;
+  }
+
+  .low-priority-card .week-title { color: var(--muted); font-size: 1rem; }
+
+  .section-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  /* === TRACKER TAB === */
+  .tracker-form {
+    background: var(--warm-white);
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 28px;
+  }
+
+  .tracker-form h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.25rem;
+    margin-bottom: 20px;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 540px) {
+    .form-grid { grid-template-columns: 1fr; }
+  }
+
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+
+  .form-group label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .form-group select,
+  .form-group input {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    background: var(--oat);
+    color: var(--charcoal);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .form-group select:focus,
+  .form-group input:focus,
+  textarea:focus {
+    border-color: var(--rose);
+  }
+
+  .questions-group {
+    margin-bottom: 18px;
+  }
+
+  .questions-group label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--charcoal);
+    margin-bottom: 6px;
+  }
+
+  .questions-group .sublabel {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  textarea {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    padding: 12px 14px;
+    border: 1.5px solid var(--rose);
+    border-radius: 10px;
+    background: var(--oat);
+    color: var(--charcoal);
+    width: 100%;
+    min-height: 110px;
+    resize: vertical;
+    outline: none;
+    line-height: 1.6;
+  }
+
+  .submit-btn {
+    background: var(--rose);
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 12px 28px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+    box-shadow: 0 2px 10px rgba(201,123,138,0.3);
+  }
+
+  .submit-btn:hover {
+    background: #b86778;
+    box-shadow: 0 4px 16px rgba(201,123,138,0.4);
+  }
+
+  .submit-btn:active { transform: scale(0.98); }
+
+  /* Entry cards */
+  .entries-section h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+    color: var(--charcoal);
+  }
+
+  .entry-card {
+    background: var(--warm-white);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 14px;
+    position: relative;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .entry-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .entry-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .entry-subject {
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .entry-year { font-size: 0.8rem; color: var(--muted); }
+
+  .entry-score {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.4rem;
+    color: var(--rose);
+  }
+
+  .entry-questions-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--charcoal);
+    margin-bottom: 6px;
+  }
+
+  .entry-questions {
+    font-size: 0.875rem;
+    color: var(--charcoal);
+    line-height: 1.7;
+    background: var(--oat);
+    padding: 10px 14px;
+    border-radius: 8px;
+    border-left: 3px solid var(--rose);
+    white-space: pre-wrap;
+  }
+
+  .delete-btn {
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-size: 0.75rem;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+
+  .delete-btn:hover {
+    border-color: #C97B8A;
+    color: var(--rose);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px;
+    color: var(--muted);
+    font-size: 0.875rem;
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .max-w {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+</style>
+</head>
+<body>
+<div class="max-w">
+  <header>
+    <h1>Revision Planner</h1>
+    <p>11 May – 14 June 2025 · Chemistry, Biology, Maths</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('plan')">Revision Plan</button>
+    <button class="tab-btn" onclick="switchTab('tracker')">Past Paper Tracker</button>
+  </div>
+
+  <!-- TAB 1: REVISION PLAN -->
+  <div id="tab-plan" class="tab-content active">
+
+    <!-- WEEK 1 -->
+    <div class="week-card">
+      <div class="week-header">
+        <div>
+          <div class="week-title">Week 1</div>
+          <div class="week-dates">11 May – 17 May</div>
+        </div>
+      </div>
+      <div class="deadline-banner">Due 15 May — Chemical Equilibria, Redox, Alkanes, Halogenoalkanes, Alkenes</div>
+      <div class="progress-label" id="prog-label-w1">0 / 10 complete</div>
+      <div class="progress-wrap"><div class="progress-bar" id="prog-w1" style="width:0%"></div></div>
+      <ul class="topic-list" id="list-w1">
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Amount of Substance</span><span class="badge badge-recurring">↻ recurring</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Bonding</span><span class="badge badge-recurring">↻ recurring</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Organic Analysis</span><span class="badge badge-flag">⚑ test this week</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Chemical Equilibria & Le Chatelier's Principle</span><span class="badge badge-chem">Chem</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Oxidation Reduction & Redox Equations</span><span class="badge badge-chem">Chem</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Alkanes</span><span class="badge badge-chem">Chem</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Halogenoalkanes</span><span class="badge badge-chem">Chem</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Alkenes</span><span class="badge badge-chem">Chem</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Proteins — general properties & enzymes</span><span class="badge badge-bio">Bio</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Carbohydrates</span><span class="badge badge-bio">Bio</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Past paper: Chemistry</span><span class="badge badge-chem">Chem</span></li>
+      </ul>
+    </div>
+
+    <!-- WEEK 2 -->
+    <div class="week-card">
+      <div class="week-header">
+        <div>
+          <div class="week-title">Week 2</div>
+          <div class="week-dates">18 May – 24 May</div>
+        </div>
+      </div>
+      <div class="deadline-banner">Due 22 May — Alcohols</div>
+      <div class="progress-label" id="prog-label-w2">0 / 9 complete</div>
+      <div class="progress-wrap"><div class="progress-bar" id="prog-w2" style="width:0%"></div></div>
+      <ul class="topic-list" id="list-w2">
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Amount of Substance</span><span class="badge badge-recurring">↻ recurring</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Bonding</span><span class="badge badge-recurring">↻ recurring</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Alcohols</span><span class="badge badge-chem">Chem</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Nucleic acids — DNA replication</span><span class="badge badge-bio">Bio</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">DNA & protein synthesis</span><span class="badge badge-bio">Bio</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Transport across cell membranes</span><span class="badge badge-bio">Bio</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Cell recognition & the immune system</span><span class="badge badge-bio">Bio</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Ch 12 — Differentiation</span><span class="badge badge-maths">Maths</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Past paper: Biology</span><span class="badge badge-bio">Bio</span></li>
+      </ul>
+    </div>
+
+    <!-- WEEK 3 -->
+    <div class="week-card">
+      <div class="week-header">
+        <div>
+          <div class="week-title">Week 3</div>
+          <div class="week-dates">25 May – 31 May</div>
+        </div>
+      </div>
+      <div class="progress-label" id="prog-label-w3">0 / 9 complete</div>
+      <div class="progress-wrap"><div class="progress-bar" id="prog-w3" style="width:0%"></div></div>
+      <ul class="topic-list" id="list-w3">
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Amount of Substance</span><span class="badge badge-recurring">↻ recurring</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Bonding</span><span class="badge badge-recurring">↻ recurring</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Energetics</span><span class="badge badge-chem">Chem</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Kinetics</span><span class="badge badge-chem">Chem</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Genetic diversity — mutation & meiosis</span><span class="badge badge-bio">Bio</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">DNA genes & chromosomes</span><span class="badge badge-bio">Bio</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Gas exchange</span><span class="badge badge-bio">Bio</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Ch 14 — Exponentials & Logarithms</span><span class="badge badge-maths">Maths</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Stats Ch 5 — Probability</span><span class="badge badge-maths">Maths</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Past paper: Maths Pure</span><span class="badge badge-maths">Maths</span></li>
+      </ul>
+    </div>
+
+    <!-- WEEK 4 -->
+    <div class="week-card">
+      <div class="week-header">
+        <div>
+          <div class="week-title">Week 4</div>
+          <div class="week-dates">1 June – 7 June</div>
+        </div>
+      </div>
+      <div class="progress-label" id="prog-label-w4">0 / 12 complete</div>
+      <div class="progress-wrap"><div class="progress-bar" id="prog-w4" style="width:0%"></div></div>
+      <ul class="topic-list" id="list-w4">
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Amount of Substance</span><span class="badge badge-recurring">↻ recurring</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Bonding</span><span class="badge badge-recurring">↻ recurring</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Mass transport in animals</span><span class="badge badge-bio">Bio</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Mass transport in plants</span><span class="badge badge-bio">Bio</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Genetic diversity & adaptation</span><span class="badge badge-bio">Bio</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Digestion & absorption</span><span class="badge badge-bio">Bio</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Stats Ch 6 — Statistical Distributions</span><span class="badge badge-maths">Maths</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Stats Ch 7 — Hypothesis Testing</span><span class="badge badge-maths">Maths</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Mechanics Ch 9 — Constant Acceleration</span><span class="badge badge-maths">Maths</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Mechanics Ch 10 — Forces & Motion</span><span class="badge badge-maths">Maths</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Past paper: Chemistry (second)</span><span class="badge badge-chem">Chem</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Past paper: Maths Stats & Mechanics</span><span class="badge badge-maths">Maths</span></li>
+      </ul>
+    </div>
+
+    <!-- WEEK 5 -->
+    <div class="week-card">
+      <div class="week-header">
+        <div>
+          <div class="week-title">Week 5</div>
+          <div class="week-dates">8 June – 14 June</div>
+        </div>
+      </div>
+      <div class="progress-label" id="prog-label-w5">0 / 10 complete</div>
+      <div class="progress-wrap"><div class="progress-bar" id="prog-w5" style="width:0%"></div></div>
+      <ul class="topic-list" id="list-w5">
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Amount of Substance</span><span class="badge badge-recurring">↻ recurring</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Bonding</span><span class="badge badge-recurring">↻ recurring</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Past paper: Biology (second)</span><span class="badge badge-bio">Bio</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Past paper: Chemistry (third)</span><span class="badge badge-chem">Chem</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Past paper: Maths full paper</span><span class="badge badge-maths">Maths</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Chemistry flashcard run-through</span><span class="badge badge-chem">Chem</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Biology flashcard run-through</span><span class="badge badge-bio">Bio</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Maths formula sheet run-through</span><span class="badge badge-maths">Maths</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Nucleic acids — structure of DNA & RNA</span><span class="badge badge-bio">Bio</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Lipids — quick review</span><span class="badge badge-bio">Bio</span></li>
+      </ul>
+    </div>
+
+    <!-- LOW PRIORITY -->
+    <div class="low-priority-card">
+      <div class="section-label">Lower Priority</div>
+      <div class="week-title" style="margin-bottom:6px; font-family:'DM Serif Display',serif; font-size:1rem; color:var(--muted);">If time allows</div>
+      <div class="week-dates" style="margin-bottom:16px;">Fit in where possible</div>
+      <div class="progress-label" id="prog-label-lp">0 / 18 complete</div>
+      <div class="progress-wrap"><div class="progress-bar" id="prog-lp" style="width:0%"></div></div>
+      <ul class="topic-list" id="list-lp">
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Cells — eukaryotic cell structure</span><span class="badge badge-bio">Bio</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Cells — prokaryotic cells & viruses</span><span class="badge badge-bio">Bio</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Cells — methods of studying cells</span><span class="badge badge-bio">Bio</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">All cells arise from other cells</span><span class="badge badge-bio">Bio</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">ATP</span><span class="badge badge-bio">Bio</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Water</span><span class="badge badge-bio">Bio</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Inorganic ions</span><span class="badge badge-bio">Bio</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Species & taxonomy</span><span class="badge badge-bio">Bio</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Biodiversity within a community</span><span class="badge badge-bio">Bio</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Investigating diversity</span><span class="badge badge-bio">Bio</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Ch 6 — Circles</span><span class="badge badge-maths">Maths</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Ch 11 — Vectors</span><span class="badge badge-maths">Maths</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Stats Ch 1 — Data Collection</span><span class="badge badge-maths">Maths</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Stats Ch 2 — Measures of Location & Spread</span><span class="badge badge-maths">Maths</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Stats Ch 3 — Representations of Data</span><span class="badge badge-maths">Maths</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Stats Ch 4 — Correlation</span><span class="badge badge-maths">Maths</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Mechanics Ch 8 — Modelling in Mechanics</span><span class="badge badge-maths">Maths</span></li>
+        <li class="topic-item" onclick="toggle(this)"><input type="checkbox"><span class="topic-label">Mechanics Ch 11 — Variable Acceleration</span><span class="badge badge-maths">Maths</span></li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- TAB 2: PAST PAPER TRACKER -->
+  <div id="tab-tracker" class="tab-content">
+    <div class="tracker-form">
+      <h2>Log a Past Paper</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Subject</label>
+          <select id="f-subject">
+            <option value="">Select…</option>
+            <option value="Chemistry">Chemistry</option>
+            <option value="Biology">Biology</option>
+            <option value="Maths">Maths</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Year</label>
+          <input type="text" id="f-year" placeholder="e.g. 2023">
+        </div>
+        <div class="form-group">
+          <label>Score / %</label>
+          <input type="number" id="f-score" placeholder="e.g. 72" min="0" max="100">
+        </div>
+      </div>
+      <div class="questions-group">
+        <label>Questions Got Wrong <span class="sublabel">List the questions, topics, or specific mistakes — be as detailed as you like</span></label>
+        <textarea id="f-questions" placeholder="e.g. Q3b — confused Le Chatelier with equilibrium constant&#10;Q7 — forgot Born-Haber cycle enthalpy sign conventions&#10;Q12 — misread moles question"></textarea>
+      </div>
+      <button class="submit-btn" onclick="addEntry()">+ Add Entry</button>
+    </div>
+
+    <div class="entries-section">
+      <h2>Your Entries</h2>
+      <div id="entries-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const WEEKS = ['w1','w2','w3','w4','w5','lp'];
+const COUNTS = { w1:11, w2:9, w3:10, w4:12, w5:10, lp:18 };
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function toggle(item) {
+  const cb = item.querySelector('input[type="checkbox"]');
+  cb.checked = !cb.checked;
+  item.classList.toggle('done', cb.checked);
+  saveChecks();
+  updateProgress();
+}
+
+function saveChecks() {
+  WEEKS.forEach(wk => {
+    const items = document.querySelectorAll('#list-' + wk + ' .topic-item');
+    const state = Array.from(items).map(i => i.querySelector('input').checked);
+    localStorage.setItem('checks-' + wk, JSON.stringify(state));
+  });
+}
+
+function loadChecks() {
+  WEEKS.forEach(wk => {
+    const saved = JSON.parse(localStorage.getItem('checks-' + wk) || '[]');
+    const items = document.querySelectorAll('#list-' + wk + ' .topic-item');
+    items.forEach((item, i) => {
+      if (saved[i]) {
+        item.querySelector('input').checked = true;
+        item.classList.add('done');
+      }
+    });
+  });
+  updateProgress();
+}
+
+function updateProgress() {
+  WEEKS.forEach(wk => {
+    const items = document.querySelectorAll('#list-' + wk + ' .topic-item');
+    const done = Array.from(items).filter(i => i.querySelector('input').checked).length;
+    const total = items.length;
+    const pct = total ? Math.round(done / total * 100) : 0;
+    document.getElementById('prog-' + wk).style.width = pct + '%';
+    document.getElementById('prog-label-' + wk).textContent = done + ' / ' + total + ' complete';
+  });
+}
+
+// TRACKER
+function addEntry() {
+  const subject = document.getElementById('f-subject').value;
+  const year = document.getElementById('f-year').value.trim();
+  const score = document.getElementById('f-score').value;
+  const questions = document.getElementById('f-questions').value.trim();
+
+  if (!subject || !year || !score || !questions) {
+    alert('Please fill in all fields before adding an entry.');
+    return;
+  }
+
+  const entries = getEntries();
+  entries.unshift({ subject, year, score: Number(score), questions, ts: Date.now() });
+  localStorage.setItem('pp-entries', JSON.stringify(entries));
+  renderEntries();
+  document.getElementById('f-subject').value = '';
+  document.getElementById('f-year').value = '';
+  document.getElementById('f-score').value = '';
+  document.getElementById('f-questions').value = '';
+}
+
+function getEntries() {
+  return JSON.parse(localStorage.getItem('pp-entries') || '[]');
+}
+
+function deleteEntry(ts) {
+  const entries = getEntries().filter(e => e.ts !== ts);
+  localStorage.setItem('pp-entries', JSON.stringify(entries));
+  renderEntries();
+}
+
+function subjectClass(subject) {
+  if (subject === 'Chemistry') return 'badge-chem';
+  if (subject === 'Biology') return 'badge-bio';
+  return 'badge-maths';
+}
+
+function renderEntries() {
+  const entries = getEntries();
+  const el = document.getElementById('entries-list');
+  if (!entries.length) {
+    el.innerHTML = '<div class="empty-state">No entries yet. Log your first past paper above.</div>';
+    return;
+  }
+  el.innerHTML = entries.map(e => `
+    <div class="entry-card">
+      <div class="entry-header">
+        <div class="entry-meta">
+          <span class="badge ${subjectClass(e.subject)} entry-subject">${e.subject}</span>
+          <span class="entry-year">${e.year}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="entry-score">${e.score}%</span>
+          <button class="delete-btn" onclick="deleteEntry(${e.ts})">Delete</button>
+        </div>
+      </div>
+      <div class="entry-questions-label">Questions got wrong</div>
+      <div class="entry-questions">${escapeHtml(e.questions)}</div>
+    </div>
+  `).join('');
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+loadChecks();
+renderEntries();
+</script>
+</body>
+</html>
